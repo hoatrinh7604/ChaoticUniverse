@@ -1,0 +1,106 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GameScreen : Singleton<GameScreen>
+{
+    public static float fixedScreenHeight = 1080;
+    public static float screenWidth;
+    public static float screenHeight;
+    public static float rateScale;
+    public static int pixelUnit = 100;
+
+    public Player OBJ_player;
+    public float PRP_durationShake = 0.25f;
+    public float PRP_amountShake = 0.25f;
+    public Fade OBJ_overEffect = null;
+    public Fade OBJ_gameover = null;
+
+    private int currentScore = 0;
+    private int highScore = 0;
+    [SerializeField] Text score;
+    [SerializeField] Text highScoreText;
+
+    float cooldown = 0;
+    Vector3 cameraInitPos;
+    // public float 
+    void Start()
+    {
+        rateScale = fixedScreenHeight / Screen.height;
+        screenWidth = (Screen.width * rateScale) / pixelUnit;
+        screenHeight = fixedScreenHeight / pixelUnit;
+        Debug.Log($"SW {screenWidth} - SH {screenHeight} with rate : {rateScale}");
+
+        cameraInitPos = Camera.main.transform.position;
+        OBJ_gameover.gameObject.SetActive(false);
+
+        highScore = PlayerPrefs.GetInt("score");
+        UpdateHighScore();
+    }
+
+    void Update()
+    {
+        float dt = Time.deltaTime;
+        if(cooldown > 0)
+        {
+            float x = Random.Range(-1, 1) * PRP_amountShake * cooldown / PRP_durationShake;
+            float y = Random.Range(-1, 1) * PRP_amountShake * cooldown / PRP_durationShake;
+            Camera.main.transform.position = new Vector3(cameraInitPos.x + x, cameraInitPos.y + y , cameraInitPos.z);
+
+            cooldown -= dt;    
+            if(cooldown <= 0)
+            {
+                Camera.main.transform.position = cameraInitPos;
+            }
+        }
+    }
+
+    public void Shake()
+    {
+        Camera.main.transform.position = cameraInitPos;
+        cooldown = PRP_durationShake;
+    }
+
+    public void GameOver()
+    {
+        if(OBJ_overEffect)
+        {
+            OBJ_overEffect.StartEffect();
+        }
+    }
+
+    public void ShowOverSceen()
+    {
+        OBJ_gameover.gameObject.SetActive(true);
+        OBJ_gameover.StartEffect();
+    }
+
+    public void Reset()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
+    }
+
+    public void BackToMenu()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+    }
+
+    public void UpdateScore(int scoreValue)
+    {
+        currentScore += scoreValue;
+
+        if(currentScore > highScore)
+        {
+            highScore = currentScore;
+            PlayerPrefs.SetInt("score", highScore);
+            UpdateHighScore();
+        }
+        score.text = currentScore.ToString();
+    }
+
+    public void UpdateHighScore()
+    {
+        highScoreText.text = highScore.ToString();
+    }
+}
